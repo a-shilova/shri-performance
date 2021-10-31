@@ -41,10 +41,15 @@ function showTable(table) {
 }
 
 // показать значение метрики за несколько дней
-function showMetricByPeriod(data, page, name, date1, date2) {
+function showMetricByPeriod(data, page, name, date1, date2, exp) {
 	let dates = [];
 	let sampleData = data.filter(item => {
-		if (item.page == page && item.name == name && item.date >= date1 && item.date <= date2) {
+		if (item.page == page
+			&& item.name == name
+			&& item.date >= date1
+			&& item.date <= date2
+			&& item.additional['experiment'] == exp
+		) {
 			if (!dates.includes(item.date)) {
 				dates.push(item.date);
 			}
@@ -71,10 +76,10 @@ function generateRow(page, name, data, date) {
 }
 
 // показать все метрики за несколько дней
-function showAllMetricByPeriod(data, page, date1, date2) {
+function showAllMetricByPeriod(data, page, date1, date2, exp) {
 	let dates = [];
 	let sampleData = data.filter(item => {
-		if (item.page == page && item.date >= date1 && item.date <= date2) {
+		if (item.page == page && item.date >= date1 && item.date <= date2 && exp == item.additional['experiment']) {
 			if (!dates.includes(item.date)) {
 				dates.push(item.date);
 			}
@@ -113,7 +118,7 @@ function showSession(data, page, reqid, date) {
 }
 
 // сравнить метрику в разных срезах
-function compareMetric(data, page, name, section) {
+function compareMetric(data, page, name, section, exp) {
 	// collect values of section
 	const values = [];
 
@@ -127,7 +132,11 @@ function compareMetric(data, page, name, section) {
 	let table = {};
 	// Agregate data for each values of section
 	values.forEach(kind => {
-		const sampleData = data.filter(item => item.page === page && item.name == name && item.additional[section] == kind)
+		const sampleData = data.filter(item => item.page === page
+			&& item.name == name
+			&& item.additional[section] == kind
+			&& item.additional['experiment'] == exp
+		)
 		.map(item => item.value);
 
 		table[kind] = distributeDataByQuantiles(sampleData);
@@ -138,9 +147,14 @@ function compareMetric(data, page, name, section) {
 
 // Пример
 // добавить метрику за выбранный день
-function addMetricByDate(data, page, name, date) {
+function addMetricByDate(data, page, name, date, exp) {
 	let sampleData = data
-					.filter(item => item.page == page && item.name == name && item.date == date)
+					.filter(item => {
+						return item.page == page
+						&& item.name == name
+						&& item.date == date 
+						&& (!exp || item.additional['experiment'] == exp)
+					})
 					.map(item => item.value);
 
 	return distributeDataByQuantiles(sampleData);
@@ -160,13 +174,13 @@ function distributeDataByQuantiles(data) {
 }
 
 // рассчитывает все метрики за день
-function calcMetricsByDate(data, page, date) {
+function calcMetricsByDate(data, page, date, exp) {
 	console.log(`All metrics for ${date}:`);
 
 	let table = {};
 	Object.keys(EVENT_NAMES).forEach(name => {
 		const event = EVENT_NAMES[name];
-		table[event] = addMetricByDate(data, page, event, date);
+		table[event] = addMetricByDate(data, page, event, date, exp);
 	});
 
 	showTable(table);
@@ -177,17 +191,15 @@ fetch('https://shri.yandex/hw/stat/data?counterId=B385EFE3-C039-4CFE-BAE7-2E73D1
 	.then(result => {
 		let data = prepareData(result);
 
-		calcMetricsByDate(data, 'send test', '2021-10-30');
-		calcMetricsByDate(data, 'rick page', '2021-10-3');
-		showSession(data, 'rick page', '607540546726', '2021-10-31');
+		calcMetricsByDate(data, 'rick page', '2021-10-31', '2');
+		showSession(data, 'rick page', '272008488241', '2021-10-31');
 
 		// добавить свои сценарии, реализовать функции выше
-		showAllMetricByPeriod(data, 'rick page', '2021-10-30', '2021-10-30');
+		showAllMetricByPeriod(data, 'rick page', '2021-10-30', '2021-11-30', '2');
 		showMetricByPeriod(data, 'rick page', 'imageLoaded', '2021-10-30', '2021-11-30');
-		compareMetric(data, 'rick page', 'imageLoaded', 'platform');
+		compareMetric(data, 'rick page', 'imageLoaded', 'platform', '2');
 
-		showAllMetricByPeriod(data, 'rick page', '2021-10-30', '2021-11-30');
-		showMetricByPeriod(data, 'rick page', 'videoLoaded', '2021-10-30', '2021-11-30');
-		showMetricByPeriod(data, 'rick page', 'video watch', '2021-10-30', '2021-11-30');
-		compareMetric(data, 'rick page', 'videoLoaded', 'platform');
+		showMetricByPeriod(data, 'rick page', 'videoLoaded', '2021-10-30', '2021-11-30', '2');
+		showMetricByPeriod(data, 'rick page', 'video watch', '2021-10-30', '2021-11-30', '2');
+		compareMetric(data, 'rick page', 'videoLoaded', 'platform', '2');
 	});

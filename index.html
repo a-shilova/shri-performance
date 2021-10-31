@@ -83,7 +83,8 @@
 		counter.init('B385EFE3-C039-4CFE-BAE7-2E73D18DB989', String(Math.random()).substr(2, 12), 'rick page');
 		counter.setAdditionalParams({
 			env: 'production',
-			platform: typeDevice
+			platform: typeDevice,
+			experiment: '2'
 		});
 
 		var onImageLoaded = () => {
