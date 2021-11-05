@@ -54,7 +54,7 @@
 			const suggest = document.getElementById('suggest');
 			suggest.innerHTML = 'Yes, have nice day!';
 			suggest.style.color = 'green';
-		};
+		}
 
 		function pause() {
 			document.getElementsByTagName('video')[0].pause();
@@ -63,7 +63,7 @@
 				playVideoTime = 0;
 			}
 			sendEventAboutFirstClick();
-		};
+		}
 		
 		function unfortanly() {
 			const suggest = document.getElementById('suggest');
@@ -73,8 +73,8 @@
 		}
 
         function isMobileDevice() {
-            return window.matchMedia('(max-width: 768px)').matches;;
-	    };
+            return window.matchMedia('(max-width: 768px)').matches;
+	    }
 
 		let timeStart = Date.now();
 		let counter = new Counter();
@@ -87,9 +87,6 @@
 			experiment: '2'
 		});
 
-		var onImageLoaded = () => {
-			counter.send('imageLoaded', Date.now() - timeStart);
-		};
 		var onerror = function() {
 			counter.send('imageError');
         };
@@ -99,7 +96,7 @@
 	<div id='suggest'>please press any button</div>
 	<div class="container">
 		<div class="item">
-			<img src="./img/633262.png" width="384px" onload="onImageLoaded();" onerror="onerror();"/>
+			<img src="./img/633262.png" width="384px" elementtiming="big-image" onerror="onerror();"/>
 			<div class="btn-collection">
 				<button type="button" onclick="unfortanly();">Push on me!</button>
 				<button type="button" onclick="unfortanly();">Or on me!</button>
@@ -113,14 +110,14 @@
 			</div>		
 		</div>
 		<div class="item">
-			<img src="./img/633288.png" width="384px" onload="onImageLoaded();" onerror="onerror();"/>
+			<img src="./img/633288.png" width="384px" elementtiming="big-image" onerror="onerror();"/>
 			<div class="btn-collection">
 				<button type="button" onclick="unfortanly();">Push on me!</button>
 				<button type="button" onclick="unfortanly();">Or on me!</button>		
 			</div>
 		</div>		
 		<div class="item">
-			<img src="./img/794362.jpg" width="384px" onload="onImageLoaded();" onerror="onerror();"/>
+			<img src="./img/794362.jpg" width="384px" elementtiming="big-image" onerror="onerror();"/>
 			<div class="btn-collection">
 				<button type="button" onclick="unfortanly();">Push on me!</button>
 				<button type="button" onclick="unfortanly();">Or on me!</button>		
@@ -133,9 +130,8 @@
 		video.width = 384;
 		video.height = 260;
 		video.src = './ezgif-1-9446ca79eb3a.mp4';
-		video.onloadeddata = function() {
-			counter.send('videoLoaded', Date.now() - timeStart);			
-		};
+		video.setAttribute('elementtiming', 'big-video')
+
 		video.onerror = function() {
 			counter.send('videoError');
 		}
@@ -145,6 +141,18 @@
 
         counter.send('connect', performance.timing.connectEnd - performance.timing.connectStart);
 		counter.send('ttfb', performance.timing.responseEnd - performance.timing.requestStart);
+
+        const observer = new PerformanceObserver((list) => {
+            let entries = list.getEntries().forEach(function (entry) {
+                if (entry.identifier === "big-image") {
+                    counter.send('imageLoaded', entry.loadTime);
+                }
+                if (entry.identifier === 'big-video') {
+                    counter.send('videoLoaded', entry.loadTime);
+                }
+            });
+        });
+        observer.observe({ entryTypes: ["element"] });
 	</script>
 </body>
 </html>
